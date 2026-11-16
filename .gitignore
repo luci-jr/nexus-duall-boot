@@ -1,0 +1,21 @@
+# Virtual Machine Disks & Temporary Artifacts (gerados em runtime pelo test-vm.sh)
+vm/disk.img
+vm/esp.img
+vm/OVMF_VARS.fd
+vm/esp/
+vm/*.cfg
+
+# Python Cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Logs & Temporary Files
+*.log
+*.tmp
+*.bak
+*~
+
+# OS Specific
+.DS_Store
+Thumbs.db
