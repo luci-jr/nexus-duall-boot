@@ -45,12 +45,21 @@ fi
 
 # 2. Remover entradas UEFI da placa-mãe via efibootmgr
 if command -v efibootmgr >/dev/null 2>&1; then
-    EXISTING_BOOT_ENTRIES=$(efibootmgr | grep -i "Nexus Dual Boot" | sed -E 's/Boot([0-9A-Fa-f]+).*/\1/' || true)
+    EXISTING_BOOT_ENTRIES=$(efibootmgr | grep -iE "Nexus Dual Boot|rEFInd Boot Manager" | sed -E 's/Boot([0-9A-Fa-f]+).*/\1/' || true)
     for bnum in ${EXISTING_BOOT_ENTRIES}; do
         echo -e "[*] Removendo entrada Boot${bnum} da NVRAM..."
         efibootmgr -b "${bnum}" -B >/dev/null 2>&1 || true
         echo -e "  [+] Entrada Boot${bnum} removida."
     done
+
+    # Restaura ordem de boot original com Ubuntu em primeiro
+    UBUNTU_NUM=$(efibootmgr | grep -i "Ubuntu" | head -n1 | sed -E 's/Boot([0-9A-Fa-f]+).*/\1/' || true)
+    WIN_NUM=$(efibootmgr | grep -i "Windows Boot Manager" | head -n1 | sed -E 's/Boot([0-9A-Fa-f]+).*/\1/' || true)
+    if [[ -n "${UBUNTU_NUM}" && -n "${WIN_NUM}" ]]; then
+        echo -e "[*] Restaurando prioridade oficial: Ubuntu (${UBUNTU_NUM}) -> Windows (${WIN_NUM})..."
+        efibootmgr -o "${UBUNTU_NUM},${WIN_NUM}" >/dev/null 2>&1 || true
+        echo -e "  [+] Ordem de boot padrão restaurada."
+    fi
 fi
 
 # 3. Restaurar fallback original BOOTX64.EFI se existir backup
@@ -60,14 +69,14 @@ if [[ -f "${ESP_MOUNT}/EFI/BOOT/BOOTX64.EFI.orig" ]]; then
     echo -e "  [+] Fallback original restaurado."
 fi
 
-# 4. Remover arquivos do diretório isolado
-if [[ -d "${TARGET_DIR}" ]]; then
-    echo -e "[*] Removendo diretório isolado ${TARGET_DIR}..."
-    rm -rf "${TARGET_DIR}"
-    echo -e "  [+] Arquivos do Nexus Dual Boot removidos da partição EFI."
-else
-    echo -e "  [!] Diretório ${TARGET_DIR} já não existe."
-fi
+# 4. Remover arquivos do diretório isolado e resíduos de refind padrão
+for d in "${TARGET_DIR}" "${ESP_MOUNT}/EFI/refind"; do
+    if [[ -d "${d}" ]]; then
+        echo -e "[*] Removendo diretório ${d}..."
+        rm -rf "${d}"
+        echo -e "  [+] Removido da partição EFI: ${d}"
+    fi
+done
 
 echo -e "\n${BLUE}==========================================================${NC}"
 echo -e "  ${GREEN}✅ DESINSTALAÇÃO CONCLUÍDA!${NC}"

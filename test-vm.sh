@@ -95,9 +95,21 @@ echo "  Dica: Use as setas do teclado para navegar e Enter para testar"
 echo "  Feche a janela do QEMU quando quiser encerrar o teste."
 echo "=========================================================="
 
+# Detecta resolução nativa do monitor
+RES_X=2560
+RES_Y=1080
+if command -v xrandr >/dev/null 2>&1 && [[ -n "${DISPLAY:-}" ]]; then
+    XR_RES=$(xrandr --current 2>/dev/null | grep -oP '\d{3,4}x\d{3,4}(?=\s+\d+[\.\d]*\*)' | head -n1 || true)
+    if [[ -n "${XR_RES}" ]]; then
+        RES_X="${XR_RES%x*}"
+        RES_Y="${XR_RES#*x}"
+    fi
+fi
+
 qemu-system-x86_64 -name 'Nexus Dual Boot - Simulador Visual' \
   -machine q35 -accel tcg -m 512 -smp 2 \
   -drive if=pflash,format=raw,readonly=on,file="${OVMF_CODE}" \
   -drive if=pflash,format=raw,file="${VM_DIR}/OVMF_VARS.fd" \
   -drive if=virtio,format=raw,snapshot=on,file="${VM_DIR}/disk.img" \
-  -vga std -nic none -no-reboot -display gtk,zoom-to-fit=on
+  -vga none -device "bochs-display,xres=${RES_X},yres=${RES_Y}" \
+  -nic none -no-reboot -display gtk,zoom-to-fit=on
