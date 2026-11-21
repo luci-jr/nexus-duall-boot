@@ -43,6 +43,12 @@ else
     echo 'GRUB_DISABLE_OS_PROBER=true' >> "$GRUB_FILE"
 fi
 
+if grep -q "^GRUB_GFXPAYLOAD_LINUX=" "$GRUB_FILE"; then
+    sed -i 's/^GRUB_GFXPAYLOAD_LINUX=.*/GRUB_GFXPAYLOAD_LINUX=keep/' "$GRUB_FILE"
+else
+    echo 'GRUB_GFXPAYLOAD_LINUX=keep' >> "$GRUB_FILE"
+fi
+
 # Configura GRUB_CMDLINE_LINUX_DEFAULT se necessário para splash limpo
 echo "[+] Atualizando configurações do GRUB via update-grub..."
 update-grub

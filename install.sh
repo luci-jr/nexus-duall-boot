@@ -219,6 +219,11 @@ if [[ -f "/etc/default/grub" ]] && command -v update-grub >/dev/null 2>&1; then
     else
         echo 'GRUB_DISABLE_OS_PROBER=true' >> /etc/default/grub
     fi
+    if grep -q "^GRUB_GFXPAYLOAD_LINUX=" /etc/default/grub; then
+        sed -i 's/^GRUB_GFXPAYLOAD_LINUX=.*/GRUB_GFXPAYLOAD_LINUX=keep/' /etc/default/grub
+    else
+        echo 'GRUB_GFXPAYLOAD_LINUX=keep' >> /etc/default/grub
+    fi
     update-grub >/dev/null 2>&1 || true
     echo -e "  [+] GRUB silenciado com sucesso: o Linux agora inicializa direto sem tela intermediária!"
 fi
