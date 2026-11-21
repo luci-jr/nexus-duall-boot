@@ -61,7 +61,7 @@ cp -rf "${SCRIPT_DIR}/theme/"* "${VM_DIR}/esp/EFI/BOOT/theme/"
 echo "[*] Gerando mini-loaders de demonstração..."
 for os in ubuntu windows; do
   cat > "${VM_DIR}/${os}.cfg" <<CFG_EOF
-set timeout=-1
+set timeout=0
 set default=0
 terminal_output console
 menuentry '>>> ${os^^} - Loader de Teste Alcancado com Sucesso! <<<' { true; }

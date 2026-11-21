@@ -78,6 +78,14 @@ for d in "${TARGET_DIR}" "${ESP_MOUNT}/EFI/refind"; do
     fi
 done
 
+# 5. Restaurar configuração original do GRUB se foi silenciado pelo instalador
+if [[ -f "/etc/default/grub.nexus-orig" ]] && command -v update-grub >/dev/null 2>&1; then
+    echo -e "[*] Restaurando /etc/default/grub original..."
+    mv -f "/etc/default/grub.nexus-orig" "/etc/default/grub"
+    update-grub >/dev/null 2>&1 || true
+    echo -e "  [+] Configuração original do GRUB restaurada."
+fi
+
 echo -e "\n${BLUE}==========================================================${NC}"
 echo -e "  ${GREEN}✅ DESINSTALAÇÃO CONCLUÍDA!${NC}"
 echo -e "  Seu sistema retornou ao estado original sem nenhuma pendência."

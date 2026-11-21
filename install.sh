@@ -104,12 +104,14 @@ fi
 echo -e "  [+] Binário UEFI rEFInd: ${CYAN}${REFIND_BIN}${NC}"
 
 # 3. Backup de Segurança do Estado Anterior
-echo -e "\n${GREEN}[3/6] Criando backup de segurança da partição EFI...${NC}"
-BACKUP_DIR="${ESP_MOUNT}/EFI/nexus-backup-$(date +%Y%m%d_%H%M%S)"
+echo -e "\n${GREEN}[3/6] Criando backup de segurança da instalação anterior...${NC}"
+BACKUP_BASE="${SUDO_USER:+/home/$SUDO_USER/.local/share/nexus-duall-boot/backups}"
+BACKUP_BASE="${BACKUP_BASE:-/var/backups/nexus-duall-boot}"
+BACKUP_DIR="${BACKUP_BASE}/nexus-backup-$(date +%Y%m%d_%H%M%S)"
 if [[ -d "${TARGET_DIR}" ]]; then
     mkdir -p "${BACKUP_DIR}"
     cp -rf "${TARGET_DIR}" "${BACKUP_DIR}/"
-    echo -e "  [+] Backup da instalação anterior salvo em: ${CYAN}${BACKUP_DIR}${NC}"
+    echo -e "  [+] Backup da instalação anterior salvo fora da ESP em: ${CYAN}${BACKUP_DIR}${NC}"
 else
     echo -e "  [+] Nenhuma instalação anterior do Nexus Dual Boot encontrada. Prosseguindo."
 fi
@@ -169,14 +171,14 @@ fi
 # 6. Blindagem Contra Sobrescrita pelo Windows Update (Boot Guard Service)
 echo -e "\n${GREEN}[6/6] Instalando proteção de persistência (Nexus Boot Guard)...${NC}"
 if command -v systemctl >/dev/null 2>&1; then
-    cat > /etc/systemd/system/nexus-boot-guard.service <<GUARD_EOF
+    cat > /etc/systemd/system/nexus-boot-guard.service <<'GUARD_EOF'
 [Unit]
 Description=Nexus Dual Boot — BootOrder Guard
 After=local-fs.target
 
 [Service]
 Type=oneshot
-ExecStart=/bin/bash -c 'NEXUS_NUM=$(efibootmgr | grep -i "Nexus Dual Boot" | head -n1 | sed -E "s/Boot([0-9A-Fa-f]+).*/\1/"); if [ -n "$NEXUS_NUM" ]; then CUR=$(efibootmgr | grep "BootOrder:" | awk "{print \$2}"); if [[ "$CUR" != "$NEXUS_NUM"* ]]; then ORDER="$NEXUS_NUM,$(echo "$CUR" | tr "," "\n" | grep -v "^$NEXUS_NUM$" | tr "\n" "," | sed "s/,$//")"; efibootmgr -o "$ORDER" >/dev/null 2>&1; fi; fi'
+ExecStart=/bin/bash -c 'NEXUS_NUM=$(efibootmgr | grep -i "Nexus Dual Boot" | head -n1 | sed -E "s/Boot([0-9A-Fa-f]+).*/\\1/"); if [ -n "$NEXUS_NUM" ]; then CUR=$(efibootmgr | grep "BootOrder:" | awk "{print \$2}"); if [[ "$CUR" != "$NEXUS_NUM"* ]]; then ORDER="$NEXUS_NUM,$(echo "$CUR" | tr "," "\n" | grep -v "^$NEXUS_NUM$" | tr "\n" "," | sed "s/,$//")"; efibootmgr -o "$ORDER" >/dev/null 2>&1; fi; fi'
 
 [Install]
 WantedBy=multi-user.target
@@ -194,6 +196,32 @@ if [[ ! -f "${ESP_MOUNT}/EFI/BOOT/BOOTX64.EFI.orig" && -f "${ESP_MOUNT}/EFI/BOOT
 fi
 cp -f "${REFIND_BIN}" "${ESP_MOUNT}/EFI/BOOT/BOOTX64.EFI"
 echo -e "  [+] Fallback UEFI padrão atualizado (${ESP_MOUNT}/EFI/BOOT/BOOTX64.EFI)"
+
+# 7. Silenciamento Automático do GRUB (Transição Direta sem Tela Azul)
+if [[ -f "/etc/default/grub" ]] && command -v update-grub >/dev/null 2>&1; then
+    echo -e "\n${GREEN}[7/7] Configurando transição direta do Linux (silenciando tela azul do GRUB)...${NC}"
+    if [[ ! -f "/etc/default/grub.nexus-orig" ]]; then
+        cp -f "/etc/default/grub" "/etc/default/grub.nexus-orig"
+    fi
+    sed -i 's/^GRUB_TIMEOUT=.*/GRUB_TIMEOUT=0/' /etc/default/grub
+    if grep -q "^GRUB_TIMEOUT_STYLE=" /etc/default/grub; then
+        sed -i 's/^GRUB_TIMEOUT_STYLE=.*/GRUB_TIMEOUT_STYLE=hidden/' /etc/default/grub
+    else
+        echo 'GRUB_TIMEOUT_STYLE=hidden' >> /etc/default/grub
+    fi
+    if grep -q "^GRUB_RECORDFAIL_TIMEOUT=" /etc/default/grub; then
+        sed -i 's/^GRUB_RECORDFAIL_TIMEOUT=.*/GRUB_RECORDFAIL_TIMEOUT=0/' /etc/default/grub
+    else
+        echo 'GRUB_RECORDFAIL_TIMEOUT=0' >> /etc/default/grub
+    fi
+    if grep -q "^GRUB_DISABLE_OS_PROBER=" /etc/default/grub; then
+        sed -i 's/^GRUB_DISABLE_OS_PROBER=.*/GRUB_DISABLE_OS_PROBER=true/' /etc/default/grub
+    else
+        echo 'GRUB_DISABLE_OS_PROBER=true' >> /etc/default/grub
+    fi
+    update-grub >/dev/null 2>&1 || true
+    echo -e "  [+] GRUB silenciado com sucesso: o Linux agora inicializa direto sem tela intermediária!"
+fi
 
 echo -e "\n${BLUE}==========================================================${NC}"
 echo -e "  ${GREEN}✅ INSTALAÇÃO CONCLUÍDA COM TOTAL SUCESSO!${NC}"
