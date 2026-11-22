@@ -143,19 +143,25 @@ nexus-duall-boot/
 ## 🚀 Como Usar
 
 ### 🧪 1. Testar Primeiro no Simulador Virtual (Sem tocar no disco)
+
 Valide a interface, proporções e resolução em uma VM segura com 1 comando:
+
 ```bash
 bash test-vm.sh
 ```
 
 ### ⚡ 2. Auto-Discovery e Configuração Automática
+
 Detecta tua resolução nativa e distribuições instaladas:
+
 ```bash
 bash auto-setup.sh
 ```
 
 ### 💻 3. Instalar no Disco Real da Máquina
+
 Registra o Nexus Dual Boot na NVRAM e copia os arquivos para a partição EFI com isolamento total:
+
 ```bash
 sudo bash install.sh
 ```
@@ -167,10 +173,10 @@ sudo bash install.sh
 O **Nexus Dual Boot** gerencia o boot de computadores que utilizam **Dual-Boot (Windows + Linux)**. Por atuar no registro de baixo nível da partição EFI (ESP) e da NVRAM UEFI (`efibootmgr`), a instalação oficial é executada pelo lado Linux:
 
 1. **Se você já tem Linux instalado ao lado do Windows:**
-   - Basta abrir o terminal no seu Linux (Ubuntu, Fedora, Arch, Mint, etc.) e rodar `sudo bash install.sh`. Ele detecta o seu Windows 10/11 automaticamente e configura a entrada do Windows Boot Manager sem tocar nos arquivos do Windows.
+   * Basta abrir o terminal no seu Linux (Ubuntu, Fedora, Arch, Mint, etc.) e rodar `sudo bash install.sh`. Ele detecta o seu Windows 10/11 automaticamente e configura a entrada do Windows Boot Manager sem tocar nos arquivos do Windows.
 2. **Se você está apenas no Windows e quer preparar a máquina:**
-   - **Opção A (Recomendada):** Inicie o PC por um pendrive LiveUSB de qualquer distribuição Linux (ex: Ubuntu ou Fedora em modo de teste/Live), baixe o repositório e rode `sudo bash install.sh`. Ele registrará o seletor na placa-mãe.
-   - **Opção B (Instalação manual no Windows via PowerShell):** Usuários avançados de Windows podem montar a partição EFI no Windows com `mountvol S: /s`, copiar a pasta do tema e o binário EFI e registrar na NVRAM através do comando `bcdedit /set {bootmgr} path \EFI\nexus-duall-boot\refind_x64.efi`.
+   * **Opção A (Recomendada):** Inicie o PC por um pendrive LiveUSB de qualquer distribuição Linux (ex: Ubuntu ou Fedora em modo de teste/Live), baixe o repositório e rode `sudo bash install.sh`. Ele registrará o seletor na placa-mãe.
+   * **Opção B (Instalação manual no Windows via PowerShell):** Usuários avançados de Windows podem montar a partição EFI no Windows com `mountvol S: /s`, copiar a pasta do tema e o binário EFI e registrar na NVRAM através do comando `bcdedit /set {bootmgr} path \EFI\nexus-duall-boot\refind_x64.efi`.
    *(O instalador automatizado oficial prioriza o script Bash pela segurança transacional de checagens do `efibootmgr`).*
 
 <div align="right"><a href="#readme-top"><img src="https://img.shields.io/badge/▲-Topo-24292e?style=flat-square" alt="Topo" /></a></div>
@@ -190,6 +196,7 @@ sudo bash uninstall.sh
 ---
 
 <a id="autor"></a>
+
 ## 👨‍💻 Desenvolvedor & Arquiteto
 
 <div align="center">
@@ -201,7 +208,7 @@ sudo bash uninstall.sh
 ### Lucivaldo Junior
 
 **Engenheiro de Software Back-end & Arquiteto de Sistemas**  
-_Belém do Pará — Amazônia, Brasil_
+*Belém do Pará — Amazônia, Brasil*
 
 <table border="1">
   <tr>
