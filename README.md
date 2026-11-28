@@ -142,54 +142,68 @@ nexus-duall-boot/
 
 ## 🚀 Como Usar
 
-### 🧪 1. Testar Primeiro no Simulador Virtual (Sem tocar no disco)
+### 🧪 1. Testar no Simulador (100% Seguro, sem tocar no disco)
 
-Valide a interface, proporções e resolução em uma VM segura com 1 comando:
+Valide a interface, proporções e navegação com a mesma fidelidade antes de tocar em qualquer partição:
 
-```bash
-bash test-vm.sh
-```
+#### 🪟 No Windows (Com a mesma facilidade do Linux):
+* **Opção 1 — Máquina Virtual QEMU (1 Clique):**  
+  Dê um duplo clique no arquivo:
+  ```cmd
+  test-vm.bat
+  ```
+  *(Se você não tiver o QEMU instalado, o próprio script oferece instalação automática em 1 clique via winget e abre a janela da VM imediatamente).*
 
-### ⚡ 2. Auto-Discovery e Configuração Automática
+* **Opção 2 — Simulador Web Instantâneo (Zero Instalação):**  
+  Dê um duplo clique no arquivo:
+  ```text
+  preview-theme.html
+  ```
+  Abre diretamente no navegador padrão (Edge, Chrome, Firefox) em tela cheia com **navegação real por teclado** (`← / → / ↑ / ↓`), seleção de sistemas operacionais e botões de utilitários.
 
-Detecta tua resolução nativa e distribuições instaladas:
+* **Opção 3 — Teste em Pendrive Real (Live USB):**  
+  Insira um pendrive formatado em FAT32 e execute:
+  ```cmd
+  create-live-usb.bat
+  ```
+  Reinicie o PC, pressione **F12** e teste no monitor real sem modificar o disco rígido.
 
-```bash
-bash auto-setup.sh
-```
-
-### 💻 3. Instalar no Disco Real da Máquina
-
-Registra o Nexus Dual Boot na NVRAM e copia os arquivos para a partição EFI com isolamento total:
-
-```bash
-sudo bash install.sh
-```
+#### 🐧 No Linux:
+* **Opção 1 — Simulador em VM QEMU:**
+  ```bash
+  bash test-vm.sh
+  ```
+* **Opção 2 — Simulador Web:**
+  Abra o arquivo `preview-theme.html` no seu navegador.
+* **Opção 3 — Teste em Pendrive Real (Live USB):**
+  ```bash
+  bash create-live-usb.sh
+  ```
 
 ---
 
-### 🪟 E se eu estiver no Windows e quiser instalar?
+### 💻 2. Instalação Definitiva no Disco
 
-O **Nexus Dual Boot** gerencia o boot de computadores que utilizam **Dual-Boot (Windows + Linux)**. Por atuar no registro de baixo nível da partição EFI (ESP) e da NVRAM UEFI (`efibootmgr`), a instalação oficial é executada pelo lado Linux:
+#### 🪟 No Windows (10 ou 11):
+Clique com o botão direito em `install-windows.bat` e selecione **"Executar como Administrador"**.  
+O instalador copia o tema isolado para a partição EFI e registra o Nexus Dual Boot na NVRAM. Quando você instalar qualquer distribuição Linux posteriormente, o Nexus já a reconhece automaticamente!
 
-1. **Se você já tem Linux instalado ao lado do Windows:**
-   * Basta abrir o terminal no seu Linux (Ubuntu, Fedora, Arch, Mint, etc.) e rodar `sudo bash install.sh`. Ele detecta o seu Windows 10/11 automaticamente e configura a entrada do Windows Boot Manager sem tocar nos arquivos do Windows.
-2. **Se você está apenas no Windows e quer preparar a máquina:**
-   * **Opção A (Recomendada):** Inicie o PC por um pendrive LiveUSB de qualquer distribuição Linux (ex: Ubuntu ou Fedora em modo de teste/Live), baixe o repositório e rode `sudo bash install.sh`. Ele registrará o seletor na placa-mãe.
-   * **Opção B (Instalação manual no Windows via PowerShell):** Usuários avançados de Windows podem montar a partição EFI no Windows com `mountvol S: /s`, copiar a pasta do tema e o binário EFI e registrar na NVRAM através do comando `bcdedit /set {bootmgr} path \EFI\nexus-duall-boot\refind_x64.efi`.
-   *(O instalador automatizado oficial prioriza o script Bash pela segurança transacional de checagens do `efibootmgr`).*
-
-<div align="right"><a href="#readme-top"><img src="https://img.shields.io/badge/▲-Topo-24292e?style=flat-square" alt="Topo" /></a></div>
+#### 🐧 No Linux:
+1. Detecte sua resolução nativa e distribuições instaladas:
+   ```bash
+   bash auto-setup.sh
+   ```
+2. Instale com segurança na partição EFI e registre na NVRAM:
+   ```bash
+   sudo bash install.sh
+   ```
 
 ---
 
-## 🔄 Como Desinstalar com Segurança
+### 🔄 3. Como Desinstalar com Segurança
 
-Para remover o Nexus Dual Boot e restaurar o bootloader original da placa-mãe a qualquer momento:
-
-```bash
-sudo bash uninstall.sh
-```
+* **No Windows:** Clique com o botão direito em `uninstall-windows.bat` e execute como Administrador.
+* **No Linux:** `sudo bash uninstall.sh`
 
 <div align="right"><a href="#readme-top"><img src="https://img.shields.io/badge/▲-Topo-24292e?style=flat-square" alt="Topo" /></a></div>
 

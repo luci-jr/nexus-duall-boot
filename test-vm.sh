@@ -55,13 +55,15 @@ mkdir -p "${VM_DIR}/esp/EFI/BOOT/theme" "${VM_DIR}/esp/EFI/ubuntu" "${VM_DIR}/es
 echo "[*] Montando arquivos do tema modular e configuração..."
 cp -f "${REFIND_BIN}" "${VM_DIR}/esp/EFI/BOOT/BOOTX64.EFI"
 cp -f "${SCRIPT_DIR}/refind.conf" "${VM_DIR}/esp/EFI/BOOT/refind.conf"
+# Garante resolução nativa 1080p compatível com o OVMF/QEMU sem distorção
+sed -i 's/^resolution .*/resolution 1920 1080/' "${VM_DIR}/esp/EFI/BOOT/refind.conf"
 cp -rf "${SCRIPT_DIR}/theme/"* "${VM_DIR}/esp/EFI/BOOT/theme/"
 
 # 3. Cria loaders de teste para Ubuntu e Windows
 echo "[*] Gerando mini-loaders de demonstração..."
 for os in ubuntu windows; do
   cat > "${VM_DIR}/${os}.cfg" <<CFG_EOF
-set timeout=0
+set timeout=-1
 set default=0
 terminal_output console
 menuentry '>>> ${os^^} - Loader de Teste Alcancado com Sucesso! <<<' { true; }
@@ -86,8 +88,14 @@ truncate -s 132M "${VM_DIR}/disk.img"
 sgdisk --clear --new=1:2048:+128M --typecode=1:ef00 --change-name=1:NEXUS_BOOT "${VM_DIR}/disk.img" >/dev/null
 dd if="${VM_DIR}/esp.img" of="${VM_DIR}/disk.img" bs=1M seek=1 conv=notrunc status=none
 
-OVMF_CODE="/usr/share/OVMF/OVMF_CODE_4M.fd"
-cp /usr/share/OVMF/OVMF_VARS_4M.fd "${VM_DIR}/OVMF_VARS.fd"
+if [[ -f "${VM_DIR}/OVMF_CODE.fd" ]]; then
+    OVMF_CODE="${VM_DIR}/OVMF_CODE.fd"
+elif [[ -f "/usr/share/OVMF/OVMF_CODE_4M.fd" ]]; then
+    OVMF_CODE="/usr/share/OVMF/OVMF_CODE_4M.fd"
+else
+    OVMF_CODE="/usr/share/OVMF/OVMF_CODE.fd"
+fi
+cp /usr/share/OVMF/OVMF_VARS_4M.fd "${VM_DIR}/OVMF_VARS.fd" 2>/dev/null || cp "${VM_DIR}/OVMF_VARS.fd" "${VM_DIR}/OVMF_VARS.fd" 2>/dev/null || true
 
 echo "=========================================================="
 echo "  🚀 INICIANDO MÁQUINA VIRTUAL DE TESTE (QEMU)"
@@ -95,21 +103,9 @@ echo "  Dica: Use as setas do teclado para navegar e Enter para testar"
 echo "  Feche a janela do QEMU quando quiser encerrar o teste."
 echo "=========================================================="
 
-# Detecta resolução nativa do monitor
-RES_X=2560
-RES_Y=1080
-if command -v xrandr >/dev/null 2>&1 && [[ -n "${DISPLAY:-}" ]]; then
-    XR_RES=$(xrandr --current 2>/dev/null | grep -oP '\d{3,4}x\d{3,4}(?=\s+\d+[\.\d]*\*)' | head -n1 || true)
-    if [[ -n "${XR_RES}" ]]; then
-        RES_X="${XR_RES%x*}"
-        RES_Y="${XR_RES#*x}"
-    fi
-fi
-
 qemu-system-x86_64 -name 'Nexus Dual Boot - Simulador Visual' \
   -machine q35 -accel tcg -m 512 -smp 2 \
   -drive if=pflash,format=raw,readonly=on,file="${OVMF_CODE}" \
   -drive if=pflash,format=raw,file="${VM_DIR}/OVMF_VARS.fd" \
   -drive if=virtio,format=raw,snapshot=on,file="${VM_DIR}/disk.img" \
-  -vga none -device "bochs-display,xres=${RES_X},yres=${RES_Y}" \
-  -nic none -no-reboot -display gtk,zoom-to-fit=on
+  -vga std -nic none -no-reboot -display gtk,zoom-to-fit=on

@@ -1,0 +1,77 @@
+name: ⚛️ Nexus Dual Boot CI
+
+on:
+  push:
+    branches: [ "main", "**" ]
+  pull_request:
+    branches: [ "main", "**" ]
+  workflow_dispatch:
+
+jobs:
+  validate-nexus-duall-boot:
+    name: 🧪 Validação & Testes — Nexus Dual Boot
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Clonar Repositório
+        uses: actions/checkout@v4
+
+      - name: 🐍 Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 🔍 Validar Sintaxe dos Scripts Bash
+        run: |
+          echo "Testando sintaxe de todos os scripts bash..."
+          find . -maxdepth 2 -name "*.sh" -exec bash -n {} +
+          echo "✅ Todos os scripts bash possuem sintaxe válida!"
+
+      - name: 🛡️ Auditoria com ShellCheck
+        run: |
+          echo "Executando ShellCheck..."
+          shellcheck -S warning *.sh || true
+
+      - name: 🐍 Compilação e Testes Unitários em Python
+        run: |
+          echo "Validando sintaxe Python..."
+          python3 -m py_compile scripts/*.py
+          echo "Executando suite de testes..."
+          python3 -m unittest discover -s scripts -p "test_*.py" -v
+
+      - name: 🎨 Validar Integridade dos Assets e Tema
+        run: |
+          echo "Checando assets essenciais..."
+          test -f theme/nanquim/background/background_2560x1080.png
+          test -f theme/nanquim/ui/selection_big.png
+          test -f theme/nanquim/os/ubuntu.png
+          test -f theme/nanquim/os/windows.png
+          test -f preview-theme.html
+          test -f test-vm.bat
+          test -f test-vm.sh
+          echo "✅ Todos os assets essenciais, ícones e simuladores estão íntegros!"
+
+  package-artifacts:
+    name: 📦 Empacotar Release Portátil
+    needs: validate-nexus-duall-boot
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Clonar Repositório
+        uses: actions/checkout@v4
+
+      - name: 🗜️ Gerar Pacote Portátil
+        run: |
+          mkdir -p dist
+          zip -r dist/nexus-duall-boot-portable.zip . \
+            -x ".git*" \
+            -x "dist/*" \
+            -x "**/__pycache__/*" \
+            -x "**/*.pyc"
+
+      - name: 📤 Publicar Artefato Portátil
+        uses: actions/upload-artifact@v4
+        with:
+          name: nexus-duall-boot-portable
+          path: dist/nexus-duall-boot-portable.zip
+          retention-days: 30

@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nexus Dual Boot — Simulador Visual Interativo</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #0b0d10;
+      font-family: 'DejaVu Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+      color: #f5f8fc;
+    }
+    #screen {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      background-image: url('theme/nanquim/background/background.png');
+      background-size: cover;
+      background-position: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .main-row {
+      display: flex;
+      gap: 120px;
+      align-items: center;
+      justify-content: center;
+      margin-top: -30px;
+    }
+    .os-card {
+      position: relative;
+      width: 320px;
+      height: 320px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+    .os-card:hover {
+      transform: scale(1.03);
+    }
+    .os-icon {
+      width: 256px;
+      height: 256px;
+      object-fit: contain;
+      z-index: 2;
+    }
+    .selection-box {
+      position: absolute;
+      width: 320px;
+      height: 320px;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      z-index: 1;
+      opacity: 0;
+      transition: opacity 0.25s ease;
+      background-image: url('theme/nanquim/ui/selection-big.png');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+    }
+    .selected .selection-box {
+      opacity: 1;
+    }
+    .tools-row {
+      display: flex;
+      gap: 48px;
+      align-items: center;
+      justify-content: center;
+      margin-top: 50px;
+      z-index: 5;
+    }
+    .tool-card {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 104px;
+      height: 96px;
+      cursor: pointer;
+      border-radius: 12px;
+      transition: transform 0.15s ease, background-color 0.2s ease;
+    }
+    .tool-card:hover {
+      background-color: rgba(210, 225, 245, 0.08);
+      transform: translateY(-2px);
+    }
+    .tool-card.selected {
+      background-color: rgba(210, 225, 245, 0.16);
+      box-shadow: 0 0 16px rgba(210, 225, 245, 0.25);
+    }
+    .tool-icon {
+      width: 96px;
+      height: 72px;
+      object-fit: contain;
+    }
+    #footer-text {
+      margin-top: 24px;
+      font-size: 14px;
+      letter-spacing: 0.8px;
+      color: rgba(245, 248, 252, 0.88);
+      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+      height: 20px;
+      font-family: monospace;
+    }
+    #help-badge {
+      position: absolute;
+      bottom: 16px;
+      right: 20px;
+      font-size: 11px;
+      color: rgba(245, 248, 252, 0.45);
+      background: rgba(0, 0, 0, 0.4);
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    #notification {
+      position: absolute;
+      top: 24px;
+      background: rgba(16, 22, 28, 0.92);
+      border: 1px solid rgba(210, 225, 245, 0.3);
+      color: #f5f8fc;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 13px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      transform: translateY(-10px);
+    }
+    #notification.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  </style>
+</head>
+<body>
+  <div id="screen">
+    <div id="notification">Iniciando sistema selecionado...</div>
+
+    <div class="main-row">
+      <div class="os-card selected" id="card-0" onclick="selectItem(0, 'os')">
+        <div class="selection-box"></div>
+        <img class="os-icon" src="theme/nanquim/os/ubuntu.png" alt="Ubuntu">
+      </div>
+      <div class="os-card" id="card-1" onclick="selectItem(1, 'os')">
+        <div class="selection-box"></div>
+        <img class="os-icon" src="theme/nanquim/os/windows.png" alt="Windows 11">
+      </div>
+    </div>
+
+    <div class="tools-row">
+      <div class="tool-card" id="tool-0" onclick="selectItem(0, 'tool')">
+        <img class="tool-icon" src="theme/nanquim/icons/func_shutdown.png" alt="Desligar">
+      </div>
+      <div class="tool-card" id="tool-1" onclick="selectItem(1, 'tool')">
+        <img class="tool-icon" src="theme/nanquim/icons/func_reset.png" alt="Reiniciar">
+      </div>
+      <div class="tool-card" id="tool-2" onclick="selectItem(2, 'tool')">
+        <img class="tool-icon" src="theme/nanquim/icons/func_firmware.png" alt="BIOS">
+      </div>
+      <div class="tool-card" id="tool-3" onclick="selectItem(3, 'tool')">
+        <img class="tool-icon" src="theme/nanquim/icons/func_exit.png" alt="Sair">
+      </div>
+    </div>
+
+    <div id="footer-text">Boot Ubuntu 26.04 LTS from NEXUS_BOOT</div>
+
+    <div id="help-badge">
+      Navegue com [← / → / ↑ / ↓] ou Mouse • [Enter] para testar boot • [F11] Tela cheia
+    </div>
+  </div>
+
+  <script>
+    let currentArea = 'os'; // 'os' ou 'tool'
+    let osIndex = 0;
+    let toolIndex = 0;
+
+    const osOptions = [
+      { name: "Ubuntu 26.04 LTS", label: "Boot Ubuntu 26.04 LTS from NEXUS_BOOT" },
+      { name: "Windows 11", label: "Boot Windows 11 from NEXUS_BOOT" }
+    ];
+
+    const toolOptions = [
+      { name: "Desligar", label: "Desligar o computador (Power Off)" },
+      { name: "Reiniciar", label: "Reiniciar o computador (Reboot)" },
+      { name: "BIOS", label: "Reiniciar na BIOS / Firmware Setup da Placa-Mãe" },
+      { name: "Sair", label: "Sair do seletor UEFI" }
+    ];
+
+    function updateUI() {
+      // Atualiza OS
+      document.querySelectorAll('.os-card').forEach((card, idx) => {
+        if (currentArea === 'os' && idx === osIndex) {
+          card.classList.add('selected');
+        } else {
+          card.classList.remove('selected');
+        }
+      });
+
+      // Atualiza Tools
+      document.querySelectorAll('.tool-card').forEach((card, idx) => {
+        if (currentArea === 'tool' && idx === toolIndex) {
+          card.classList.add('selected');
+        } else {
+          card.classList.remove('selected');
+        }
+      });
+
+      // Atualiza footer text
+      const footer = document.getElementById('footer-text');
+      if (currentArea === 'os') {
+        footer.innerText = osOptions[osIndex].label;
+      } else {
+        footer.innerText = toolOptions[toolIndex].label;
+      }
+    }
+
+    function selectItem(index, area) {
+      currentArea = area;
+      if (area === 'os') osIndex = index;
+      if (area === 'tool') toolIndex = index;
+      updateUI();
+    }
+
+    function triggerAction() {
+      const notif = document.getElementById('notification');
+      if (currentArea === 'os') {
+        notif.innerText = `>>> Iniciando ${osOptions[osIndex].name} com sucesso! <<<`;
+      } else {
+        notif.innerText = `>>> Executando: ${toolOptions[toolIndex].name} <<<`;
+      }
+      notif.classList.add('show');
+      setTimeout(() => notif.classList.remove('show'), 2200);
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight') {
+        if (currentArea === 'os') {
+          osIndex = (osIndex + 1) % osOptions.length;
+        } else {
+          toolIndex = (toolIndex + 1) % toolOptions.length;
+        }
+        updateUI();
+      } else if (e.key === 'ArrowLeft') {
+        if (currentArea === 'os') {
+          osIndex = (osIndex - 1 + osOptions.length) % osOptions.length;
+        } else {
+          toolIndex = (toolIndex - 1 + toolOptions.length) % toolOptions.length;
+        }
+        updateUI();
+      } else if (e.key === 'ArrowDown') {
+        if (currentArea === 'os') {
+          currentArea = 'tool';
+          updateUI();
+        }
+      } else if (e.key === 'ArrowUp') {
+        if (currentArea === 'tool') {
+          currentArea = 'os';
+          updateUI();
+        }
+      } else if (e.key === 'Enter') {
+        triggerAction();
+      }
+    });
+
+    updateUI();
+  </script>
+</body>
+</html>
