@@ -2,10 +2,14 @@ name: ⚛️ Nexus Dual Boot CI
 
 on:
   push:
-    branches: [ "main", "**" ]
+    branches: [ "main" ]
+    tags: [ "v*" ]
   pull_request:
-    branches: [ "main", "**" ]
+    branches: [ "main" ]
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   validate-nexus-duall-boot:
@@ -42,8 +46,8 @@ jobs:
       - name: 🎨 Validar Integridade dos Assets e Tema
         run: |
           echo "Checando assets essenciais..."
-          test -f theme/nanquim/background/background_2560x1080.png
-          test -f theme/nanquim/ui/selection_big.png
+          test -f theme/nanquim/background/background.png || test -f theme/nanquim/background/background_2560x1080.png
+          test -f theme/nanquim/ui/selection-big.png || test -f theme/nanquim/ui/selection_big.png
           test -f theme/nanquim/os/ubuntu.png
           test -f theme/nanquim/os/windows.png
           test -f preview-theme.html
@@ -69,9 +73,19 @@ jobs:
             -x "**/__pycache__/*" \
             -x "**/*.pyc"
 
-      - name: 📤 Publicar Artefato Portátil
+      - name: 📤 Publicar Artefato Portátil no Actions
         uses: actions/upload-artifact@v4
         with:
           name: nexus-duall-boot-portable
           path: dist/nexus-duall-boot-portable.zip
           retention-days: 30
+
+      - name: 🚀 Publicar Oficialmente no GitHub Releases (quando tag for criada)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/nexus-duall-boot-portable.zip
+          name: "Nexus Dual Boot ${{ github.ref_name }}"
+          generate_release_notes: true
+          draft: false
+          prerelease: false
